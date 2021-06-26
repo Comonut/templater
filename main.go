@@ -52,8 +52,15 @@ func main() {
 		fmt.Printf("could not start program: %s\n", err)
 		os.Exit(1)
 	}
+	if !model.submitted {
+		os.Exit(0)
+	}
 
 	data := model.retrieveData()
-	renderFolder(filepath.Join(template, "templates"), data, target)
+	err = renderFolder(filepath.Join(template, "templates"), data, target)
+	if err != nil {
+		fmt.Printf("Error rendering templates: %s\n", err)
+		os.Exit(1)
+	}
 
 }

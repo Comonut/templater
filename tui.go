@@ -25,6 +25,7 @@ type model struct {
 	focusIndex int
 	inputs     []textinput.Model
 	cursorMode textinput.CursorMode
+	submitted  bool
 }
 
 func initModel(params []map[string]interface{}) (model, error) {
@@ -39,6 +40,7 @@ func initModel(params []map[string]interface{}) (model, error) {
 		t.TextStyle = focusedStyle
 		m.inputs[i] = t
 	}
+	m.inputs[0].Focus()
 
 	return m, nil
 }
@@ -54,18 +56,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c", "esc":
 			return m, tea.Quit
 
-		// Change cursor mode
-		case "ctrl+r":
-			m.cursorMode++
-			if m.cursorMode > textinput.CursorHide {
-				m.cursorMode = textinput.CursorBlink
-			}
-			cmds := make([]tea.Cmd, len(m.inputs))
-			for i := range m.inputs {
-				cmds[i] = m.inputs[i].SetCursorMode(m.cursorMode)
-			}
-			return m, tea.Batch(cmds...)
-
 		// Set focus to next input
 		case "tab", "shift+tab", "enter", "up", "down":
 			s := msg.String()
@@ -73,6 +63,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// Did the user press enter while the submit button was focused?
 			// If so, exit.
 			if s == "enter" && m.focusIndex == len(m.inputs) {
+				m.submitted = true
 				return m, tea.Quit
 			}
 
