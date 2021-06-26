@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"bytes"
@@ -21,29 +21,29 @@ func getWalkFunction(base string, data map[string]interface{}, target string) fi
 		t := template.New("filename")
 		_, err = t.Funcs(sprig.TxtFuncMap()).Parse(relativePath)
 		if err != nil {
-			panic(err)
+			return err
 		}
 		err = t.Execute(buf, data)
 		if err != nil {
-			panic(err)
+			return err
 		}
 		content, err := ioutil.ReadFile(path)
 		if err != nil {
-			panic(err)
+			return err
 		}
 
 		textContent := string(content)
 		fileTemplate := template.New("filecontent")
 		_, err = fileTemplate.Funcs(sprig.TxtFuncMap()).Parse(textContent)
 		if err != nil {
-			panic(err)
+			return err
 		}
 
 		newPath := filepath.Join(target, buf.String())
 		os.MkdirAll(filepath.Dir(newPath), os.ModePerm)
 		newfile, err := os.OpenFile(newPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
-			panic(err)
+			return err
 		}
 		fileTemplate.Execute(newfile, data)
 
