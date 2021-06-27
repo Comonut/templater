@@ -1,2 +1,7 @@
 - param: project
-  type: textinput
+  title: Paramater
+  type: textfield
+  example: hello
+
+- param: age
+  type: textfield

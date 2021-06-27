@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/Comonut/templater/components"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
@@ -10,7 +11,7 @@ import (
 )
 
 var (
-	focusedStyle        = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
+	focusedStyle        = lipgloss.NewStyle().Foreground(lipgloss.Color("#3399ff"))
 	blurredStyle        = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
 	cursorStyle         = focusedStyle.Copy()
 	noStyle             = lipgloss.NewStyle()
@@ -23,24 +24,27 @@ var (
 
 type model struct {
 	focusIndex int
-	inputs     []textinput.Model
-	cursorMode textinput.CursorMode
+	inputs     []components.Component
 	submitted  bool
 }
 
-func initModel(params []map[string]interface{}) (model, error) {
+func initModel(params []datamodel) (model, error) {
 	m := model{
-		inputs: make([]textinput.Model, len(params)),
+		inputs: make([]components.Component, len(params)),
 	}
 
 	for i, param := range params {
-		t := textinput.NewModel()
-		t.Placeholder = param["param"].(string)
-		t.PromptStyle = focusedStyle
-		t.TextStyle = focusedStyle
-		m.inputs[i] = t
+		comp, err := param.generateComponent()
+		if err != nil {
+			return model{}, err
+		}
+		m.inputs[i] = comp
 	}
-	m.inputs[0].Focus()
+	switch first := m.inputs[0].(type) {
+	case components.TextField:
+		first.Input.Focus()
+		m.inputs[0] = first
+	}
 
 	return m, nil
 }
@@ -60,14 +64,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "tab", "shift+tab", "enter", "up", "down":
 			s := msg.String()
 
-			// Did the user press enter while the submit button was focused?
-			// If so, exit.
 			if s == "enter" && m.focusIndex == len(m.inputs) {
 				m.submitted = true
 				return m, tea.Quit
 			}
 
-			// Cycle indexes
 			if s == "up" || s == "shift+tab" {
 				m.focusIndex--
 			} else {
@@ -83,16 +84,25 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds := make([]tea.Cmd, len(m.inputs))
 			for i := 0; i <= len(m.inputs)-1; i++ {
 				if i == m.focusIndex {
-					// Set focused state
-					cmds[i] = m.inputs[i].Focus()
-					m.inputs[i].PromptStyle = focusedStyle
-					m.inputs[i].TextStyle = focusedStyle
+					switch first := m.inputs[i].(type) {
+					case components.TextField:
+						cmds[i] = first.Input.Focus()
+						first.Input.PromptStyle = focusedStyle
+						first.Input.TextStyle = focusedStyle
+						m.inputs[i] = first
+
+					}
 					continue
 				}
-				// Remove focused state
-				m.inputs[i].Blur()
-				m.inputs[i].PromptStyle = noStyle
-				m.inputs[i].TextStyle = noStyle
+				switch first := m.inputs[i].(type) {
+				case components.TextField:
+					first.Input.Blur()
+					first.Input.PromptStyle = noStyle
+					first.Input.TextStyle = noStyle
+					m.inputs[i] = first
+
+				}
+
 			}
 
 			return m, tea.Batch(cmds...)
@@ -108,8 +118,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *model) updateInputs(msg tea.Msg) tea.Cmd {
 	var cmds = make([]tea.Cmd, len(m.inputs))
 
-	// Only text inputs with Focus() set will respond, so it's safe to simply
-	// update all of them here without any further logic.
 	for i := range m.inputs {
 		m.inputs[i], cmds[i] = m.inputs[i].Update(msg)
 	}
@@ -133,17 +141,13 @@ func (m model) View() string {
 	}
 	fmt.Fprintf(&b, "\n\n%s\n\n", *button)
 
-	b.WriteString(helpStyle.Render("cursor mode is "))
-	b.WriteString(cursorModeHelpStyle.Render(m.cursorMode.String()))
-	b.WriteString(helpStyle.Render(" (ctrl+r to change style)"))
-
 	return b.String()
 }
 
 func (m *model) retrieveData() map[string]interface{} {
 	data := make(map[string]interface{})
 	for _, field := range m.inputs {
-		name := field.Placeholder
+		name := field.Key()
 		value := field.Value()
 		data[name] = value
 	}
