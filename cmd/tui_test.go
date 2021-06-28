@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"fmt"
+	"github.com/Comonut/templater/components"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"testing"
@@ -21,11 +21,18 @@ func equalModels(this, other model) (bool, string) {
 	}
 
 	for i := range this.inputs {
-		if this.inputs[i].Placeholder != other.inputs[i].Placeholder {
-			return false, fmt.Sprintf("placeholder for input %d", i)
-		}
-		if this.inputs[i].Focused() != other.inputs[i].Focused() {
-			return false, fmt.Sprintf("focus for input %d", i)
+		switch thisCasted := this.inputs[i].(type) {
+		case components.TextField:
+			otherCasted, ok := other.inputs[i].(components.TextField)
+			if !ok {
+				return false, "component types don't match"
+			}
+			if thisCasted.Param != otherCasted.Param {
+				return false, "textfield param doesn't match"
+			}
+			if thisCasted.Input.Placeholder != otherCasted.Input.Placeholder {
+				return false, "textfield placeholder doesn't match"
+			}
 		}
 	}
 
@@ -44,24 +51,28 @@ func textField(placeholder string, focused bool) textinput.Model {
 func TestGenerateModel(t *testing.T) {
 	for _, test := range []struct {
 		name      string
-		datamodel []map[string]interface{}
+		datamodel []datamodel
 		expected  model
 	}{
 		{
 			name: "simple two text fields",
-			datamodel: []map[string]interface{}{
+			datamodel: []datamodel{
 				{
 					"param": "name",
+					"type":  "textfield",
 				},
 				{
-					"param": "age",
+					"param":   "age",
+					"type":    "textfield",
+					"title":   "Age",
+					"example": "23",
 				},
 			},
 			expected: model{
 				focusIndex: 0,
-				inputs: []textinput.Model{
-					textField("name", true),
-					textField("age", false),
+				inputs: []components.Component{
+					components.NewTextField("name", "name", ""),
+					components.NewTextField("age", "Age", "23"),
 				},
 				submitted: false,
 			},
@@ -90,9 +101,9 @@ func TestUpdateModel(t *testing.T) {
 			name: "down button updates index",
 			current: model{
 				focusIndex: 0,
-				inputs: []textinput.Model{
-					textField("name", true),
-					textField("age", false),
+				inputs: []components.Component{
+					components.NewTextField("name", "name", ""),
+					components.NewTextField("age", "Age", "23"),
 				},
 			},
 			message: tea.KeyMsg{
@@ -100,9 +111,9 @@ func TestUpdateModel(t *testing.T) {
 			},
 			expected: model{
 				focusIndex: 1,
-				inputs: []textinput.Model{
-					textField("name", false),
-					textField("age", true),
+				inputs: []components.Component{
+					components.NewTextField("name", "name", ""),
+					components.NewTextField("age", "Age", "23"),
 				},
 			},
 		},
@@ -110,9 +121,9 @@ func TestUpdateModel(t *testing.T) {
 			name: "down on submit goes to first field",
 			current: model{
 				focusIndex: 2,
-				inputs: []textinput.Model{
-					textField("name", false),
-					textField("age", false),
+				inputs: []components.Component{
+					components.NewTextField("name", "name", ""),
+					components.NewTextField("age", "Age", "23"),
 				},
 			},
 			message: tea.KeyMsg{
@@ -120,9 +131,9 @@ func TestUpdateModel(t *testing.T) {
 			},
 			expected: model{
 				focusIndex: 0,
-				inputs: []textinput.Model{
-					textField("name", true),
-					textField("age", false),
+				inputs: []components.Component{
+					components.NewTextField("name", "name", ""),
+					components.NewTextField("age", "Age", "23"),
 				},
 			},
 		},

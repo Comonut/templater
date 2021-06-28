@@ -7,6 +7,9 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+var focusedStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#3399ff"))
+var blurredStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+
 type TextField struct {
 	Param string
 	Title string
@@ -38,9 +41,6 @@ func (t TextField) Key() string {
 func (t TextField) Value() interface{} {
 	return t.Input.Value()
 }
-
-var focusedStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#3399ff"))
-var blurredStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
 
 func NewTextField(param, title, placeholder string) *TextField {
 	t := textinput.NewModel()

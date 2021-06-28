@@ -42,6 +42,8 @@ func getWalkFunction(base string, data map[string]interface{}, target string) fi
 		newPath := filepath.Join(target, buf.String())
 		os.MkdirAll(filepath.Dir(newPath), os.ModePerm)
 		newfile, err := os.OpenFile(newPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		defer newfile.Close()
+
 		if err != nil {
 			return err
 		}
