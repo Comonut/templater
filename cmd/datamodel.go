@@ -59,6 +59,27 @@ func (dm *datamodel) getParamExample() (string, error) {
 	return "", nil
 }
 
+func (dm *datamodel) getParamOptions() ([]string, error) {
+	options, ok := (*dm)["options"]
+	if ok {
+		switch casted := options.(type) {
+		case []interface{}:
+			options := make([]string, len(casted))
+			for i, _ := range casted {
+				element, ok := casted[i].(string)
+				if !ok {
+					return []string{}, fmt.Errorf("`options` value should be a string array")
+				}
+				options[i] = element
+			}
+			return options, nil
+		default:
+			return []string{}, fmt.Errorf("`options` value should be a string array")
+		}
+	}
+	return []string{}, nil
+}
+
 func (dm *datamodel) generateComponent() (components.Component, error) {
 	t, err := dm.getParamType()
 	if err != nil {
@@ -67,6 +88,8 @@ func (dm *datamodel) generateComponent() (components.Component, error) {
 	switch t {
 	case "textfield":
 		return dm.generateTextField()
+	case "choice":
+		return dm.generateChoice()
 	default:
 		return nil, fmt.Errorf("unrecognized type %s", t)
 	}
@@ -88,4 +111,22 @@ func (dm *datamodel) generateTextField() (*components.TextField, error) {
 	}
 
 	return components.NewTextField(param, title, example), nil
+}
+
+func (dm *datamodel) generateChoice() (*components.Choice, error) {
+	param, err := dm.getParamName()
+	if err != nil {
+		return nil, err
+	}
+	title, err := dm.getParamTitle()
+	if err != nil {
+		return nil, err
+	}
+
+	options, err := dm.getParamOptions()
+	if err != nil {
+		return nil, err
+	}
+
+	return components.NewChoice(param, title, options), nil
 }

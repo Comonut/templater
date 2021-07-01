@@ -7,6 +7,6 @@ type Component interface {
 	View() string
 	Key() string
 	Value() interface{}
-	Focus() tea.Cmd
-	Unfocus() tea.Cmd
+	Focus() (Component, tea.Cmd)
+	Unfocus() (Component, tea.Cmd)
 }

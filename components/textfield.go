@@ -9,19 +9,29 @@ import (
 
 var focusedStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#3399ff"))
 var blurredStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+var noStyle = lipgloss.NewStyle()
 
 type TextField struct {
-	Param string
-	Title string
-	Input textinput.Model
+	Param   string
+	Title   string
+	Input   textinput.Model
+	focused bool
 }
 
-func (t TextField) Focus() tea.Cmd {
-	panic("implement me")
+func (t TextField) Focus() (Component, tea.Cmd) {
+	focus := t.Input.Focus()
+	t.focused = true
+	t.Input.PromptStyle = focusedStyle
+	t.Input.TextStyle = focusedStyle
+	return t, focus
 }
 
-func (t TextField) Unfocus() tea.Cmd {
-	panic("implement me")
+func (t TextField) Unfocus() (Component, tea.Cmd) {
+	t.Input.Blur()
+	t.focused = false
+	t.Input.PromptStyle = noStyle
+	t.Input.TextStyle = noStyle
+	return t, nil
 }
 
 func (t TextField) Update(msg tea.Msg) (Component, tea.Cmd) {
@@ -31,7 +41,13 @@ func (t TextField) Update(msg tea.Msg) (Component, tea.Cmd) {
 }
 
 func (t TextField) View() string {
-	return fmt.Sprintf("%s\n%s", t.Title, t.Input.View())
+	var title string
+	if t.focused {
+		title = focusedStyle.Copy().Render(t.Title)
+	} else {
+		title = t.Title
+	}
+	return fmt.Sprintf("%s\n%s", title, t.Input.View())
 }
 
 func (t TextField) Key() string {

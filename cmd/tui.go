@@ -29,6 +29,11 @@ type model struct {
 }
 
 func initModel(params []datamodel) (model, error) {
+
+	if len(params) == 0 {
+		return model{}, fmt.Errorf("0 paramaters registered")
+	}
+
 	m := model{
 		inputs: make([]components.Component, len(params)),
 	}
@@ -40,11 +45,7 @@ func initModel(params []datamodel) (model, error) {
 		}
 		m.inputs[i] = comp
 	}
-	switch first := m.inputs[0].(type) {
-	case components.TextField:
-		first.Input.Focus()
-		m.inputs[0] = first
-	}
+	m.inputs[0], _ = m.inputs[0].Focus()
 
 	return m, nil
 }
@@ -84,27 +85,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds := make([]tea.Cmd, len(m.inputs))
 			for i := 0; i <= len(m.inputs)-1; i++ {
 				if i == m.focusIndex {
-					switch first := m.inputs[i].(type) {
-					case components.TextField:
-						cmds[i] = first.Input.Focus()
-						first.Input.PromptStyle = focusedStyle
-						first.Input.TextStyle = focusedStyle
-						m.inputs[i] = first
-
-					}
+					m.inputs[i], cmds[i] = m.inputs[i].Focus()
 					continue
 				}
-				switch first := m.inputs[i].(type) {
-				case components.TextField:
-					first.Input.Blur()
-					first.Input.PromptStyle = noStyle
-					first.Input.TextStyle = noStyle
-					m.inputs[i] = first
-
-				}
-
+				m.inputs[i], cmds[i] = m.inputs[i].Unfocus()
 			}
-
 			return m, tea.Batch(cmds...)
 		}
 	}

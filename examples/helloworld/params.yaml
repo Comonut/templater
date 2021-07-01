@@ -1,7 +1,16 @@
-- param: project
-  title: Paramater
+- param: file
+  title: Generated file name
   type: textfield
-  example: hello
+  example: ex. script
 
-- param: age
+- param: greeting
+  title: Preffered greeting?
+  type: choice
+  options:
+    - Hello
+    - Greetings
+    - What's up
+- param: name
+  title: Your name
   type: textfield
+  example: Alex
