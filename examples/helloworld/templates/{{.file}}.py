@@ -1,2 +1,2 @@
 # Generated at {{now}}
-println("{{.greeting}} world from {{.name}}!")
+print("{{.greeting}} world from {{.name}}!")
