@@ -71,15 +71,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			if s == "up" || s == "shift+tab" {
-				m.focusIndex--
+				if m.focusIndex > 0 {
+					m.focusIndex--
+				}
 			} else {
-				m.focusIndex++
-			}
-
-			if m.focusIndex > len(m.inputs) {
-				m.focusIndex = 0
-			} else if m.focusIndex < 0 {
-				m.focusIndex = len(m.inputs)
+				if m.focusIndex < len(m.inputs) {
+					m.focusIndex++
+				}
 			}
 
 			cmds := make([]tea.Cmd, len(m.inputs))
@@ -92,6 +90,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			return m, tea.Batch(cmds...)
 		}
+	case tea.WindowSizeMsg:
+		//TODO update form size
+		return m, nil
+
 	}
 
 	// Handle character input and blinking
