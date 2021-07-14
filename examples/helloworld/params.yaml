@@ -10,6 +10,7 @@
     - Hello
     - Greetings
     - What's up
+
 - param: name
   title: Your name
   type: textfield

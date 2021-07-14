@@ -22,9 +22,11 @@ const ParamsFile = "params.yaml"
 const TemplatesFolder = "templates"
 
 var ValuesFile string
+var WriteModeString string
 
 func init() {
 	rootCmd.Flags().StringVarP(&ValuesFile, "values", "v", "", "File containing parameter values")
+	rootCmd.Flags().StringVarP(&WriteModeString, "mode", "m", "replace", "Output writing mode - one of append, ignore, replace, merge")
 }
 
 func Execute() {
@@ -100,6 +102,6 @@ func run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	err = renderFolder(filepath.Join(template, TemplatesFolder), data, target)
+	err = renderFolder(filepath.Join(template, TemplatesFolder), data, target, WriteModeString)
 	return err
 }

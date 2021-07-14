@@ -1,7 +1,6 @@
 package util
 
 import (
-	"strings"
 	"testing"
 )
 
@@ -21,11 +20,18 @@ func TestMerge(t *testing.T) {
 			expected: "a\nb\nY\nc",
 		},
 		{
+			testid:   "simple merge with template",
+			content1: "a\nb\nc",
+			content2: "a\nY\nc",
+			template: "a\n{{.param}}\nc",
+			expected: "a\nb\nY\nc",
+		},
+		{
 			testid:   "YAML with array of objects",
-			content1: "kube:\n  params:\n    - param1:\n      abc: 1",
-			content2: "kube:\n  params:\n    - param2:\n      abc: 2",
-			template: "kube:\n  params:",
-			expected: "kube:\n  params:\n    - param1:\n      abc: 1\n    - param2:\n      abc: 2",
+			content1: "kube:\n  params:\n    - name: kur\n      value: 1",
+			content2: "kube:\n  params:\n    - name: huy\n      value: 2",
+			template: "kube:\n  params:\n    - name: {{.name}}\n      value: {{.value}}",
+			expected: "kube:\n  params:\n    - name: kur\n      value: 1\n    - name: huy\n      value: 2",
 		},
 		{
 			testid:   "YAML with two mergeable sections",
@@ -35,10 +41,7 @@ func TestMerge(t *testing.T) {
 			expected: "apiVersion: kustomize.config.k8s.io/v1beta1\nkind: Kustomization\n\nnamePrefix: test-\n\nresources:\n  - first-cronjob.yaml\n  - second-cronjob.yaml\n\nimages:\n  - name: test-image\n\nconfigMapGenerator:\n  - {name: first-config, envs: [first-config.env]}\n  - {name: second-config, envs: [second-config.env]}\n\nconfigurations:\n  - kustomizeconfig/sealedsecretkind.yaml",
 		},
 	} {
-		firstReader := strings.NewReader(test.content1)
-		secondReader := strings.NewReader(test.content2)
-		templateReader := strings.NewReader(test.template)
-		result := mergeContents(firstReader, secondReader, templateReader)
+		result := MergeContents(test.content1, test.content2, test.template)
 		if result != test.expected {
 			t.Errorf("Failed `%s`\nexpected:\n%s\ngot:\n%s", test.testid, test.expected, result)
 		}
