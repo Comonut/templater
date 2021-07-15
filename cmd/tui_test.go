@@ -23,7 +23,7 @@ func equalModels(this, other model) (bool, string) {
 	for i := range this.inputs {
 		switch thisCasted := this.inputs[i].(type) {
 		case components.TextField:
-			otherCasted, ok := other.inputs[i].(components.TextField)
+			otherCasted, ok := other.inputs[i].(*components.TextField)
 			if !ok {
 				return false, "component types don't match"
 			}
@@ -33,6 +33,18 @@ func equalModels(this, other model) (bool, string) {
 			if thisCasted.Input.Placeholder != otherCasted.Input.Placeholder {
 				return false, "textfield placeholder doesn't match"
 			}
+		case components.Choice:
+			otherCasted, ok := other.inputs[i].(*components.Choice)
+			if !ok {
+				return false, "component types don't match"
+			}
+			if thisCasted.Param != otherCasted.Param {
+				return false, "choice param doesn't match"
+			}
+			if thisCasted.Choice != otherCasted.Choice {
+				return false, "choice selection doesn't match"
+			}
+
 		}
 	}
 
@@ -118,22 +130,62 @@ func TestUpdateModel(t *testing.T) {
 			},
 		},
 		{
-			name: "down on submit goes to first field",
+			name: "right on choice updates choice",
 			current: model{
-				focusIndex: 2,
+				focusIndex: 0,
 				inputs: []components.Component{
-					components.NewTextField("name", "name", ""),
-					components.NewTextField("age", "Age", "23"),
+					&components.Choice{
+						Param:   "test",
+						Title:   "test",
+						Options: []string{"one", "two"},
+						Choice:  0,
+						Focused: true,
+					},
 				},
 			},
 			message: tea.KeyMsg{
-				Type: tea.KeyDown,
+				Type: tea.KeyRight,
 			},
 			expected: model{
 				focusIndex: 0,
 				inputs: []components.Component{
-					components.NewTextField("name", "name", ""),
-					components.NewTextField("age", "Age", "23"),
+					&components.Choice{
+						Param:   "test",
+						Title:   "test",
+						Options: []string{"one", "two"},
+						Choice:  1,
+						Focused: true,
+					},
+				},
+			},
+		},
+		{
+			name: "right on choice doesn't update choice when unfocused",
+			current: model{
+				focusIndex: 1,
+				inputs: []components.Component{
+					&components.Choice{
+						Param:   "test",
+						Title:   "test",
+						Options: []string{"one", "two"},
+						Choice:  0,
+						Focused: false,
+					},
+				},
+			},
+			message: tea.KeyMsg{
+				Type: tea.KeyRight,
+			},
+			expected: model{
+				focusIndex: 1,
+				inputs: []components.Component{
+					&components.Choice{
+						Param:   "test",
+						Title:   "test",
+						Options: []string{"one", "two"},
+						Choice:  0,
+						Focused: false,
+					},
 				},
 			},
 		},

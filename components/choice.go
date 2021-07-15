@@ -7,29 +7,32 @@ import (
 
 type Choice struct {
 	Param   string
-	title   string
-	options []string
-	choice  int
-	focused bool
+	Title   string
+	Options []string
+	Choice  int
+	Focused bool
 }
 
 func (c Choice) Update(msg tea.Msg) (Component, tea.Cmd) {
+	if !c.Focused {
+		return c, nil
+	}
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "left":
-			if c.choice == 0 {
-				c.choice = len(c.options) - 1
+			if c.Choice == 0 {
+				c.Choice = len(c.Options) - 1
 				return c, nil
 			}
-			c.choice -= 1
+			c.Choice -= 1
 			return c, nil
 		case "right":
-			if c.choice == len(c.options)-1 {
-				c.choice = 0
+			if c.Choice == len(c.Options)-1 {
+				c.Choice = 0
 				return c, nil
 			}
-			c.choice += 1
+			c.Choice += 1
 			return c, nil
 		}
 	}
@@ -38,24 +41,24 @@ func (c Choice) Update(msg tea.Msg) (Component, tea.Cmd) {
 
 func (c Choice) View() string {
 	var title string
-	if c.focused {
-		title = focusedStyle.Copy().Render(c.title)
+	if c.Focused {
+		title = focusedStyle.Copy().Render(c.Title)
 	} else {
-		title = c.title
+		title = c.Title
 	}
 
 	var builder strings.Builder
 	builder.WriteString(title)
 	builder.WriteString("\n")
-	for i, option := range c.options {
+	for i, option := range c.Options {
 		if i != 0 {
 			builder.WriteString("\t")
 		}
 		var renderedOption string
-		if i != c.choice {
+		if i != c.Choice {
 			renderedOption = blurredStyle.Copy().Render(option)
 		} else {
-			if c.focused {
+			if c.Focused {
 				renderedOption = focusedStyle.Copy().Render(option)
 			} else {
 				renderedOption = option
@@ -73,27 +76,27 @@ func (c Choice) Key() string {
 }
 
 func (c Choice) Value() interface{} {
-	if c.choice == -1 {
+	if c.Choice == -1 {
 		return ""
 	}
-	return c.options[c.choice]
+	return c.Options[c.Choice]
 }
 
 func (c Choice) Focus() (Component, tea.Cmd) {
-	c.focused = true
+	c.Focused = true
 	return c, nil
 }
 
 func (c Choice) Unfocus() (Component, tea.Cmd) {
-	c.focused = false
+	c.Focused = false
 	return c, nil
 }
 
 func NewChoice(param, title string, options []string) *Choice {
 	return &Choice{
 		Param:   param,
-		title:   title,
-		options: options,
-		choice:  0,
+		Title:   title,
+		Options: options,
+		Choice:  0,
 	}
 }

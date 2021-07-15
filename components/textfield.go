@@ -15,12 +15,12 @@ type TextField struct {
 	Param   string
 	Title   string
 	Input   textinput.Model
-	focused bool
+	Focused bool
 }
 
 func (t TextField) Focus() (Component, tea.Cmd) {
 	focus := t.Input.Focus()
-	t.focused = true
+	t.Focused = true
 	t.Input.PromptStyle = focusedStyle
 	t.Input.TextStyle = focusedStyle
 	return t, focus
@@ -28,7 +28,7 @@ func (t TextField) Focus() (Component, tea.Cmd) {
 
 func (t TextField) Unfocus() (Component, tea.Cmd) {
 	t.Input.Blur()
-	t.focused = false
+	t.Focused = false
 	t.Input.PromptStyle = noStyle
 	t.Input.TextStyle = noStyle
 	return t, nil
@@ -42,7 +42,7 @@ func (t TextField) Update(msg tea.Msg) (Component, tea.Cmd) {
 
 func (t TextField) View() string {
 	var title string
-	if t.focused {
+	if t.Focused {
 		title = focusedStyle.Copy().Render(t.Title)
 	} else {
 		title = t.Title
